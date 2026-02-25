@@ -1,0 +1,105 @@
+/* GLOBAL RESET */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: linear-gradient(135deg, #0f1115, #1a1d23);
+  color: #e6e6e6;
+  min-height: 100vh;
+}
+
+/* PAGE CONTAINER */
+.page-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 60px 24px;
+}
+
+/* HEADINGS */
+h1 {
+  font-size: 2.5rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+  letter-spacing: -1px;
+}
+
+h2 {
+  font-size: 1.4rem;
+  font-weight: 500;
+  margin: 40px 0 15px;
+  color: #b3b3b3;
+}
+
+/* CARD STYLE */
+.card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 28px;
+  margin-bottom: 25px;
+  transition: 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* PROFILE SUMMARY */
+.profile-list {
+  list-style: none;
+  margin-top: 10px;
+}
+
+.profile-list li {
+  margin-bottom: 8px;
+  color: #cfcfcf;
+}
+
+/* INVESTMENT ITEMS */
+.investment-item {
+  margin-bottom: 16px;
+}
+
+.investment-title {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 4px;
+}
+
+.investment-desc {
+  color: #9ca3af;
+  font-size: 0.95rem;
+}
+
+/* FACTORS */
+.factors-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.factors-list li {
+  margin-bottom: 8px;
+  color: #9ca3af;
+}
+
+/* DISCLAIMER */
+.disclaimer {
+  font-size: 0.8rem;
+  color: #777;
+  margin-top: 40px;
+  line-height: 1.5;
+}
+
+/* CHART CONTAINER */
+.chart-container {
+  margin-top: 30px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+}

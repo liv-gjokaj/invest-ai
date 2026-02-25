@@ -1,0 +1,6 @@
+borderColor: "#22c55e",
+backgroundColor: "rgba(34,197,94,0.1)",
+tension: 0.4,
+borderWidth: 3,
+pointRadius: 4,
+pointBackgroundColor: "#22c55e",
