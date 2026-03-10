@@ -7,12 +7,14 @@ export default function IntakeTest() {
   const [formData, setFormData] = useState({
     age: "",
     income: "",
+    monthlySavings: "",
     objective: "Growth",
     risk: "Medium",
-    horizon: "Long Term (7+ years)",
+    horizon: "Long Term (7+ Years)",
+    lifeScenario: "None",
+    experience: "Beginner",
   });
 
-  // Handle typing
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -20,116 +22,103 @@ export default function IntakeTest() {
     });
   };
 
-  // Clean income (remove commas)
-  const getCleanIncome = () => {
-    return Number(formData.income.replace(/,/g, ""));
+  const getCleanNumber = (value) => {
+    return Number(value.replace(/,/g, ""));
   };
 
-  // Validate before navigating
   const handleSubmit = () => {
-    const incomeValue = getCleanIncome();
+    const income = getCleanNumber(formData.income);
+    const savings = getCleanNumber(formData.monthlySavings);
 
-    if (!incomeValue || incomeValue <= 0) {
-      alert("Please enter a valid annual income greater than $0.");
+    if (!income || income <= 0) {
+      alert("Enter a valid income.");
       return;
     }
 
     navigate("/results", {
       state: {
         ...formData,
-        income: incomeValue,
+        income,
+        monthlySavings: savings,
       },
     });
   };
 
-  // Button enabled only if valid
-  const isValid = getCleanIncome() > 0;
-
   return (
     <div className="page-center">
       <div className="glass-card">
-
-        <h1 className="main-title">
-          Build Your Financial Profile
-        </h1>
-
-        <p className="main-subtitle">
-          Answer a few questions so we can contextualize your strategy.
-        </p>
+        <h1 className="main-title">Capital Allocation Profile</h1>
 
         <div className="form-grid">
 
           <div className="form-group">
-            <label>Age</label>
-            <input
-              type="number"
-              name="age"
-              value={formData.age}
-              onChange={handleChange}
-              placeholder="e.g. 22"
-            />
+            <div className="section-label">Age</div>
+            <input type="number" name="age" value={formData.age} onChange={handleChange} />
           </div>
 
           <div className="form-group">
-            <label>Annual Income</label>
-            <input
-              type="text"
-              name="income"
-              value={formData.income}
-              onChange={handleChange}
-              placeholder="e.g. 75,000"
-            />
+            <div className="section-label">Annual Income (USD)</div>
+            <input type="text" name="income" value={formData.income} onChange={handleChange} />
           </div>
 
           <div className="form-group">
-            <label>Primary Objective</label>
-            <select
-              name="objective"
-              value={formData.objective}
-              onChange={handleChange}
-            >
-              <option>Growth</option>
-              <option>Income</option>
-              <option>Capital Preservation</option>
-            </select>
+            <div className="section-label">Monthly Investment Capacity</div>
+            <input type="text" name="monthlySavings" value={formData.monthlySavings} onChange={handleChange} />
           </div>
 
           <div className="form-group">
-            <label>Risk Tolerance</label>
-            <select
-              name="risk"
-              value={formData.risk}
-              onChange={handleChange}
-            >
+            <div className="section-label">Risk Tolerance</div>
+            <select name="risk" value={formData.risk} onChange={handleChange}>
               <option>Low</option>
               <option>Medium</option>
               <option>High</option>
             </select>
           </div>
 
+          <div className="form-group">
+            <div className="section-label">Primary Objective</div>
+            <select name="objective" value={formData.objective} onChange={handleChange}>
+              <option>Growth</option>
+              <option>Income Generation</option>
+              <option>Capital Preservation</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <div className="section-label">Investment Horizon</div>
+            <select name="horizon" value={formData.horizon} onChange={handleChange}>
+              <option>Short Term (0–3 Years)</option>
+              <option>Medium Term (3–7 Years)</option>
+              <option>Long Term (7+ Years)</option>
+            </select>
+          </div>
+
           <div className="form-group full-width">
-            <label>Investment Horizon</label>
-            <select
-              name="horizon"
-              value={formData.horizon}
-              onChange={handleChange}
-            >
-              <option>Short Term (0–3 years)</option>
-              <option>Medium Term (3–7 years)</option>
-              <option>Long Term (7+ years)</option>
+            <div className="section-label">Current Life Scenario</div>
+            <select name="lifeScenario" value={formData.lifeScenario} onChange={handleChange}>
+              <option>None</option>
+              <option>Student Loans</option>
+              <option>Buying Home Soon</option>
+              <option>Supporting Family</option>
+              <option>Early Career / Low Savings</option>
+              <option>High Savings / Wealth Accumulation Phase</option>
+            </select>
+          </div>
+
+          <div className="form-group full-width">
+            <div className="section-label">Investment Experience</div>
+            <select name="experience" value={formData.experience} onChange={handleChange}>
+              <option>Beginner</option>
+              <option>Intermediate</option>
+              <option>Advanced</option>
             </select>
           </div>
 
         </div>
 
-        <button
-          className="primary-button"
-          onClick={handleSubmit}
-          disabled={!isValid}
-        >
-          View Educational Scenarios →
+        <button className="primary-btn" onClick={handleSubmit}>
+          Generate Strategy
         </button>
-
       </div>
     </div>
   );

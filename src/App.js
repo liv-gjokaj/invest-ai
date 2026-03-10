@@ -1,42 +1,65 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
 import LandingPage from "./components/LandingPage";
 import IntakeTest from "./components/IntakeTest";
 import InvestmentResults from "./components/InvestmentResults";
-import Disclaimer from "./components/Disclaimer";
-import Dashboard from "./pages/Dashboard";
+import DisclaimerGate from "./components/DisclaimerGate";
 
 import "./App.css";
 
 function App() {
+  const [accepted, setAccepted] = useState(false);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("disclaimerAccepted");
+    if (stored === "true") {
+      setAccepted(true);
+    }
+  }, []);
+
+  const handleAccept = () => {
+    localStorage.setItem("disclaimerAccepted", "true");
+    setAccepted(true);
+  };
+
   return (
     <Router>
       <div className="app-container">
-
-        {/* Global Background Layer */}
         <div className="app-background" />
-
-        {/* Main Content */}
         <div className="app-content">
           <Routes>
 
-            {/* Landing */}
-            <Route path="/" element={<LandingPage />} />
+            <Route
+              path="/disclaimer"
+              element={<DisclaimerGate onAccept={handleAccept} />}
+            />
 
-            {/* Intake Questionnaire */}
-            <Route path="/test" element={<IntakeTest />} />
+            <Route
+              path="/"
+              element={
+                accepted ? <LandingPage /> : <Navigate to="/disclaimer" replace />
+              }
+            />
 
-            {/* Results Page (Graph + Companies + Sources) */}
-            <Route path="/results" element={<InvestmentResults />} />
+            <Route
+              path="/test"
+              element={
+                accepted ? <IntakeTest /> : <Navigate to="/disclaimer" replace />
+              }
+            />
 
-            {/* Optional Pages */}
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/disclaimer" element={<Disclaimer />} />
+            <Route
+              path="/results"
+              element={
+                accepted ? <InvestmentResults /> : <Navigate to="/disclaimer" replace />
+              }
+            />
+
+            <Route path="*" element={<Navigate to="/" replace />} />
 
           </Routes>
         </div>
-
       </div>
     </Router>
   );

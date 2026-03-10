@@ -1,29 +1,47 @@
+// LifeScenarios.js
+
 export const lifeScenarioEffects = {
-  "Buying a Home": {
-    description: "Large upfront down payment reduces portfolio growth early.",
+  home: {
+    label: "Buying a Home",
+    description:
+      "A large upfront down payment reduces portfolio growth in early years.",
     adjustment: (value, year) => {
-      if (year === 2) return value - 40000;
+      if (year === 2) {
+        return value - 40000;
+      }
       return value;
     },
   },
-  "Starting a Business": {
-    description: "Higher risk with potential slower early growth.",
+
+  business: {
+    label: "Starting a Business",
+    description:
+      "Increased financial risk may slow portfolio growth during early stages.",
     adjustment: (value, year) => {
-      if (year <= 3) return value * 0.9;
+      if (year <= 3) {
+        return value * 0.9;
+      }
       return value;
     },
   },
-  "Career Break": {
-    description: "Reduced contributions for 2 years.",
+
+  career: {
+    label: "Career Break",
+    description:
+      "Temporary income pause reduces annual contributions for two years.",
     adjustment: (value, year) => {
-      if (year === 3 || year === 4) return value * 0.8;
+      if (year === 3 || year === 4) {
+        return value * 0.8;
+      }
       return value;
     },
   },
-  "Early Retirement": {
-    description: "Shorter investment horizon.",
-    adjustment: (value, year) => {
-      if (year > 6) return value;
+
+  retire: {
+    label: "Early Retirement",
+    description:
+      "Shorter compounding window reduces long-term capital accumulation.",
+    adjustment: (value) => {
       return value;
     },
   },

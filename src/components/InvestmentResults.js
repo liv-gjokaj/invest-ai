@@ -1,5 +1,5 @@
-import { useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
 import {
   LineChart,
   Line,
@@ -8,182 +8,220 @@ import {
   Tooltip,
   CartesianGrid,
   ResponsiveContainer,
-  Legend
+  Legend,
 } from "recharts";
-import { lifeScenarioEffects } from "./LifeScenarios";
+
+import TradingViewSPY from "../components/TradingViewSPY";
+import sp500 from "../data/sp500";
 
 export default function InvestmentResults() {
   const location = useLocation();
-  const profile = location.state;
+  const navigate = useNavigate();
+  const user = location.state || null;
 
-  const [selectedScenario, setSelectedScenario] = useState(null);
+  const [timeline] = useState(10);
 
-  if (!profile) {
-    return (
-      <div className="page-center">
-        <div className="glass-card">
-          <h2>No profile data found.</h2>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!user) navigate("/intake");
+  }, [user, navigate]);
 
-  const income = Number(profile.income);
+  const model = useMemo(() => {
+    if (!user) return null;
 
-  // Risk-based return assumptions
-  let annualReturn = 0.05;
-  if (profile.risk === "Medium") annualReturn = 0.08;
-  if (profile.risk === "High") annualReturn = 0.12;
+    const age = Number(user.age || 25);
+    const income = Number(user.income || 60000);
+    const monthlySavings =
+      Number(user.monthlySavings) || income * 0.18;
+    const riskLevel = user.risk || "Medium";
 
-  const yearlyInvestment = income * 0.20;
-  const years = 10;
+    let riskScore =
+      (riskLevel === "High" ? 35 :
+       riskLevel === "Medium" ? 25 : 15) +
+      (age < 30 ? 20 :
+       age < 45 ? 12 : 5);
 
-  let baseValue = 0;
-  let scenarioValue = 0;
+    riskScore = Math.min(riskScore, 100);
 
-  const projectionData = [];
+    const equityReturn = 0.08;
+    const bondReturn = 0.035;
+    const inflation = 0.025;
 
-  for (let i = 1; i <= years; i++) {
+    const equityWeight = (riskScore / 100) * 0.85;
+    const bondWeight = 1 - equityWeight;
 
-    // Base growth
-    baseValue = (baseValue + yearlyInvestment) * (1 + annualReturn);
+    const blendedReturn =
+      equityWeight * equityReturn +
+      bondWeight * bondReturn -
+      inflation;
 
-    // Scenario growth
-    scenarioValue = (scenarioValue + yearlyInvestment) * (1 + annualReturn);
+    const conservativeReturn = blendedReturn - 0.02;
+    const aggressiveReturn = blendedReturn + 0.02;
 
-    if (selectedScenario) {
-      scenarioValue =
-        lifeScenarioEffects[selectedScenario].adjustment(
-          scenarioValue,
-          i
-        );
+    let annualSavings = monthlySavings * 12;
+
+    let conservative = annualSavings;
+    let expected = annualSavings;
+    let aggressive = annualSavings;
+
+    const projection = [];
+
+    for (let year = 1; year <= timeline; year++) {
+      conservative =
+        (conservative + annualSavings) *
+        (1 + conservativeReturn);
+
+      expected =
+        (expected + annualSavings) *
+        (1 + blendedReturn);
+
+      aggressive =
+        (aggressive + annualSavings) *
+        (1 + aggressiveReturn);
+
+      projection.push({
+        year: `Year ${year}`,
+        conservative: Math.round(conservative),
+        expected: Math.round(expected),
+        aggressive: Math.round(aggressive),
+      });
     }
 
-    projectionData.push({
-      year: `Year ${i}`,
-      base: Math.round(baseValue),
-      scenario: Math.round(scenarioValue)
-    });
-  }
+    return {
+      riskScore,
+      projection,
+      suggestedMonthly: Math.round(income * 0.22),
+    };
+  }, [user, timeline]);
 
-  const formatCurrency = (value) =>
-    `$${value.toLocaleString()}`;
+  const portfolio = useMemo(() => {
+    if (!user) return [];
+
+    const risk = user.risk || "Medium";
+    const age = Number(user.age || 30);
+
+    let growthBoost = 1;
+    let defensiveBoost = 1;
+
+    if (risk === "High") growthBoost += 0.6;
+    if (risk === "Low") defensiveBoost += 0.8;
+    if (age > 50) defensiveBoost += 0.4;
+
+    const scored = sp500.map(stock => {
+      let score = 1;
+
+      if (stock.sector === "Technology") score *= growthBoost;
+      if (
+        stock.sector === "Utilities" ||
+        stock.sector === "Healthcare" ||
+        stock.sector === "Consumer Staples"
+      ) {
+        score *= defensiveBoost;
+      }
+
+      return { ...stock, score };
+    });
+
+    const totalScore = scored.reduce((sum, s) => sum + s.score, 0);
+
+    const weighted = scored.map(stock => {
+      const percent = (stock.score / totalScore) * 100;
+
+      return [
+        `${stock.name} (${stock.symbol})`,
+        Number(percent.toFixed(2))
+      ];
+    });
+
+    return weighted.sort((a, b) => b[1] - a[1]);
+
+  }, [user]);
+
+  if (!model) return null;
+
+  const highestWeight = Math.max(...portfolio.map(p => p[1]));
 
   return (
     <div className="page-center">
-      <div className="glass-card results-card">
+      <div className="glass-card" style={{ maxWidth: "1400px", width: "95%" }}>
 
-        <h1 className="main-title">Educational Scenarios</h1>
+        <h1 className="main-title">
+          Institutional Allocation Dashboard
+        </h1>
 
-        <p className="results-profile">
-          <strong>Objective:</strong> {profile.objective}<br />
-          <strong>Risk:</strong> {profile.risk}<br />
-          <strong>Horizon:</strong> {profile.horizon}<br />
-          <strong>Annual Income:</strong> ${income.toLocaleString()}<br />
-          <strong>Yearly Investment (20%):</strong> ${yearlyInvestment.toLocaleString()}
+        <p style={{ opacity: 0.7 }}>
+          Risk Score: {model.riskScore}/100
         </p>
 
-        {/* CHART */}
-        <div className="chart-container">
-          <h2>Projected Portfolio Growth</h2>
+        <p style={{ opacity: 0.7 }}>
+          Suggested Monthly Investment: ${model.suggestedMonthly}
+        </p>
 
-          <ResponsiveContainer width="100%" height={350}>
-            <LineChart data={projectionData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#2d3748" />
-              <XAxis dataKey="year" stroke="#ccc" />
-              <YAxis
-                stroke="#ccc"
-                tickFormatter={(value) => `$${value / 1000}k`}
-              />
-              <Tooltip formatter={(value) => formatCurrency(value)} />
+        <div style={{ height: 420, marginTop: 50 }}>
+          <ResponsiveContainer>
+            <LineChart data={model.projection}>
+              <CartesianGrid stroke="rgba(255,255,255,0.05)" />
+              <XAxis dataKey="year" />
+              <YAxis tickFormatter={(v) => `$${(v / 1000).toFixed(0)}K`} />
+              <Tooltip formatter={(v) => `$${v.toLocaleString()}`} />
               <Legend />
-
-              <Line
-                type="monotone"
-                dataKey="base"
-                stroke="#22c55e"
-                strokeWidth={3}
-                name="Normal Growth"
-              />
-
-              {selectedScenario && (
-                <Line
-                  type="monotone"
-                  dataKey="scenario"
-                  stroke="#f97316"
-                  strokeWidth={3}
-                  name="With Life Scenario"
-                />
-              )}
+              <Line type="monotone" dataKey="conservative" stroke="#7c3aed" dot={false} />
+              <Line type="monotone" dataKey="expected" stroke="#f59e0b" strokeWidth={3} dot={false} />
+              <Line type="monotone" dataKey="aggressive" stroke="#00C49F" dot={false} />
             </LineChart>
           </ResponsiveContainer>
-
-          <p className="chart-explanation">
-            This chart assumes you invest 20% of your income annually with an expected return based on your selected risk level.
-            The orange line shows how real-life events can impact long-term growth.
-          </p>
         </div>
 
-        {/* LIFE SCENARIO */}
-        <div className="life-section">
-          <h2>Life Scenario Impact Simulation</h2>
-
-          <div className="scenario-buttons">
-            {Object.keys(lifeScenarioEffects).map((scenario) => (
-              <button
-                key={scenario}
-                className={`scenario-btn ${
-                  selectedScenario === scenario ? "active" : ""
-                }`}
-                onClick={() => setSelectedScenario(scenario)}
-              >
-                {scenario}
-              </button>
-            ))}
-          </div>
-
-          {selectedScenario && (
-            <div className="scenario-description">
-              {lifeScenarioEffects[selectedScenario].description}
-            </div>
-          )}
+        <div style={{ marginTop: 100 }}>
+          <h2 style={{ marginBottom: 20 }}>
+            SPY — S&P 500
+          </h2>
+          <TradingViewSPY />
         </div>
 
-        {/* COMPANY RECOMMENDATIONS SECTION (RESTORED) */}
-        <div className="company-section">
-          <h2>Example Companies Based on Risk Level</h2>
+        <div style={{ marginTop: 100 }}>
+          <h2 style={{ fontSize: 28, fontWeight: 600, marginBottom: 40 }}>
+            Hyper-Diversified Portfolio
+          </h2>
 
-          <div className="company-card">
-            <h3>NVIDIA (NVDA)</h3>
-            <p>
-              Industry leader in AI infrastructure and semiconductor innovation.
-              Strong revenue growth driven by artificial intelligence expansion.
-            </p>
-            <a href="https://finance.yahoo.com/quote/NVDA" target="_blank" rel="noreferrer">
-              View on Yahoo Finance
-            </a>
-          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 45 }}>
 
-          <div className="company-card">
-            <h3>Microsoft (MSFT)</h3>
-            <p>
-              Diversified technology leader with cloud dominance (Azure),
-              enterprise software strength, and AI integration.
-            </p>
-            <a href="https://finance.yahoo.com/quote/MSFT" target="_blank" rel="noreferrer">
-              View on Yahoo Finance
-            </a>
-          </div>
+            {portfolio.map(([name, percent], i) => {
+              const ticker = name.match(/\((.*?)\)/)[1];
+              const isTop = percent === highestWeight;
 
-          <div className="company-card">
-            <h3>Apple (AAPL)</h3>
-            <p>
-              Strong balance sheet, consistent profitability, and global brand dominance.
-              Stable long-term performer with dividend history.
-            </p>
-            <a href="https://finance.yahoo.com/quote/AAPL" target="_blank" rel="noreferrer">
-              View on Yahoo Finance
-            </a>
+              return (
+                <div key={i}>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <h3 style={{ fontSize: 22, fontWeight: 500, margin: 0 }}>
+                      {isTop && "⭐ "}
+                      {name}
+                    </h3>
+                    <span style={{ fontSize: 22, fontWeight: 600 }}>
+                      — {percent}%
+                    </span>
+                  </div>
+
+                  <div style={{ marginTop: 8, fontSize: 13, opacity: 0.6 }}>
+                    <a
+                      href={`https://finance.yahoo.com/quote/${ticker}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Yahoo Finance
+                    </a>
+                    {"  |  "}
+                    <a
+                      href={`https://www.bloomberg.com/quote/${ticker}:US`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Bloomberg
+                    </a>
+                  </div>
+                </div>
+              );
+            })}
+
           </div>
         </div>
 
