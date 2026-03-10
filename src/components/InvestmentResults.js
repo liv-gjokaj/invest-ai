@@ -191,8 +191,7 @@ export default function InvestmentResults() {
 
               return (
                 <div key={i}>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <h3 style={{ fontSize: 22, fontWeight: 500, margin: 0 }}>
+<div className="portfolio-row" style={{ display: "flex", justifyContent: "space-between" }}>                    <h3 style={{ fontSize: 22, fontWeight: 500, margin: 0 }}>
                       {isTop && "⭐ "}
                       {name}
                     </h3>
